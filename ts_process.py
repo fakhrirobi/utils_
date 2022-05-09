@@ -4,126 +4,122 @@ from sklearn.utils import indexable
 from sklearn.utils.validation import _num_samples
 import pandas as pd 
 
-class TsTools : 
-    def __init__(self) : 
-        pass 
-    def get_metrics(self,ytrue,yhat) : 
-        from sklearn.metrics import (mean_absolute_error,
-                                    mean_absolute_percentage_error,
-                                    mean_squared_error)
-        RMSE_ = np.sqrt(mean_squared_error(ytrue,yhat))
-        MAE_ = mean_absolute_error(ytrue,yhat)
-        MAPE_= mean_absolute_percentage_error(ytrue,yhat)
-        
-        print(f'RMSE :{RMSE_}, MAE : {MAE_}, MAPE :{MAPE_} ')
-        return {'RMSE' : RMSE_,
-            'MAE' :MAE_, 
-           'MAPE' : MAPE_}
-    def transform_data(self,data,ts,window,diff_num)->pd.DataFrame :
-        """
-            Function to provide various TS transformation to make it stationary (classical) 
-            Args : 
-            data : pd.DataFrame 
-            ts  : column name that contain TS data
-        """
-        data['diff'] = data[ts].diff(diff_num).fillna(0)
-        data['ts_log'] = data[ts].apply(lambda x: np.log(x))
-        
-        #box cox transformation 
-        from scipy.stats import boxcox 
-        xbox_cox,_ = boxcox(data[ts])
-        data['box_cox_transform'] = xbox_cox
-        #rolling logarithm transformation with 12 month rolling mean 
-        data['ts_log_moving_avg'] = data['ts_log'].rolling(window = window,
-                                                                    center = False).mean()
 
-        # moving avg with 12 month windows
-        data['ts_moving_avg'] = data[ts].rolling(window = window,
-                                                            center = False).mean()
+def get_metrics(ytrue,yhat) : 
+    from sklearn.metrics import (mean_absolute_error,
+                                mean_absolute_percentage_error,
+                                mean_squared_error)
+    RMSE_ = np.sqrt(mean_squared_error(ytrue,yhat))
+    MAE_ = mean_absolute_error(ytrue,yhat)
+    MAPE_= mean_absolute_percentage_error(ytrue,yhat)
 
-        #differencing logarithm transformed value 
-        data['ts_log_diff'] = data['ts_log'].diff()
-
-        #differencing ts with its average 
-        data['ts_moving_avg_diff'] = data[ts] - data['ts_moving_avg']
-
-        # differencing log with its log moving average 
-        data['ts_log_moving_avg_diff'] = data['ts_log'] - data['ts_log_moving_avg']
-
-
-    
-
-
-        data['ts_log_ewma'] = data['ts_log'].ewm(halflife = window,ignore_na = False, min_periods = 0,adjust = True).mean()
-
-
-
-
-        #differencing EMWA with its log 
-        data['ts_log_ewma_diff'] = data['ts_log'] - data['ts_log_ewma']
-        #root square 
-        data['sqrt_ts'] = np.sqrt(data[ts])
-        
-        #rolling sqrt 
-        data['moving_avg_sqrt'] = data['sqrt_ts'].rolling(window = window,
-                                                                    center = False).mean()
-        data['diff_sqrt_moving_avg'] = data['sqrt_ts']-data['moving_avg_sqrt']
-        data = data.dropna()
-        return data
-    def stationary_test(data,ts,alpha_threshold=0.05) : 
-        """
-        Function to conduct Stationary test 
+    print(f'RMSE :{RMSE_}, MAE : {MAE_}, MAPE :{MAPE_} ')
+    return {'RMSE' : RMSE_,
+        'MAE' :MAE_, 
+       'MAPE' : MAPE_}
+def transform_data(data,ts,window,diff_num)->pd.DataFrame :
+    """
+        Function to provide various TS transformation to make it stationary (classical) 
         Args : 
         data : pd.DataFrame 
-        ts   : column name from data that contain Time Series Feature 
-        alpha_threshold : confidence interval 
-        """
-        from statsmodels.tsa.stattools import adfuller
-        result = adfuller(data[ts])
-        print('ADF Statistic: %f' % result[0])
-        print('p-value: %f' % result[1])
-        print('Critical Values:')
-        for key, value in result[4].items():
-            print('\t%s: %.3f' % (key, value))
-        if result[1] > alpha_threshold : 
-            print('The Data Is Non Stationary') 
-        else : 
-            print('The Data Is Stationary')
-    def plot_seasonal_decompose(self,result, title="Seasonal Decomposition"):
-        from plotly.subplots import make_subplots 
-        import plotly.graph_objects as go 
-        return (
-            make_subplots(
-                rows=4,
-                cols=1,
-                subplot_titles=["Observed", "Trend", "Seasonal", "Residuals"],
-            )
-            .add_trace(
-                go.Scatter(x=result.seasonal.index, y=result.observed, mode="lines"),
-                row=1,
-                col=1,
-            )
-            .add_trace(
-                go.Scatter(x=result.trend.index, y=result.trend, mode="lines"),
-                row=2,
-                col=1,
-            )
-            .add_trace(
-                go.Scatter(x=result.seasonal.index, y=result.seasonal, mode="lines"),
-                row=3,
-                col=1,
-            )
-            .add_trace(
-                go.Scatter(x=result.resid.index, y=result.resid, mode="lines"),
-                row=4,
-                col=1,
-            )
-            .update_layout(
-                height=900, title=title, margin=dict(t=100), title_x=0.5, showlegend=False
-            ,template='ggplot2')
-        )
-    #implementing cross validation 
+        ts  : column name that contain TS data
+    """
+    data['diff'] = data[ts].diff(diff_num).fillna(0)
+    data['ts_log'] = data[ts].apply(lambda x: np.log(x))
 
+    #box cox transformation 
+    from scipy.stats import boxcox 
+    xbox_cox,_ = boxcox(data[ts])
+    data['box_cox_transform'] = xbox_cox
+    #rolling logarithm transformation with 12 month rolling mean 
+    data['ts_log_moving_avg'] = data['ts_log'].rolling(window = window,
+                                                                center = False).mean()
+
+    # moving avg with 12 month windows
+    data['ts_moving_avg'] = data[ts].rolling(window = window,
+                                                        center = False).mean()
+
+    #differencing logarithm transformed value 
+    data['ts_log_diff'] = data['ts_log'].diff()
+
+    #differencing ts with its average 
+    data['ts_moving_avg_diff'] = data[ts] - data['ts_moving_avg']
+
+    # differencing log with its log moving average 
+    data['ts_log_moving_avg_diff'] = data['ts_log'] - data['ts_log_moving_avg']
+
+
+
+
+
+    data['ts_log_ewma'] = data['ts_log'].ewm(halflife = window,ignore_na = False, min_periods = 0,adjust = True).mean()
+
+
+
+
+    #differencing EMWA with its log 
+    data['ts_log_ewma_diff'] = data['ts_log'] - data['ts_log_ewma']
+    #root square 
+    data['sqrt_ts'] = np.sqrt(data[ts])
+
+    #rolling sqrt 
+    data['moving_avg_sqrt'] = data['sqrt_ts'].rolling(window = window,
+                                                                center = False).mean()
+    data['diff_sqrt_moving_avg'] = data['sqrt_ts']-data['moving_avg_sqrt']
+    data = data.dropna()
+    return data
+def stationary_test(data,ts,alpha_threshold=0.05) : 
+    """
+    Function to conduct Stationary test 
+    Args : 
+    data : pd.DataFrame 
+    ts   : column name from data that contain Time Series Feature 
+    alpha_threshold : confidence interval 
+    """
+    from statsmodels.tsa.stattools import adfuller
+    result = adfuller(data[ts])
+    print('ADF Statistic: %f' % result[0])
+    print('p-value: %f' % result[1])
+    print('Critical Values:')
+    for key, value in result[4].items():
+        print('\t%s: %.3f' % (key, value))
+    if result[1] > alpha_threshold : 
+        print('The Data Is Non Stationary') 
+    else : 
+        print('The Data Is Stationary')
+def plot_seasonal_decompose(result, title="Seasonal Decomposition"):
+    from plotly.subplots import make_subplots 
+    import plotly.graph_objects as go 
+    return (
+        make_subplots(
+            rows=4,
+            cols=1,
+            subplot_titles=["Observed", "Trend", "Seasonal", "Residuals"],
+        )
+        .add_trace(
+            go.Scatter(x=result.seasonal.index, y=result.observed, mode="lines"),
+            row=1,
+            col=1,
+        )
+        .add_trace(
+            go.Scatter(x=result.trend.index, y=result.trend, mode="lines"),
+            row=2,
+            col=1,
+        )
+        .add_trace(
+            go.Scatter(x=result.seasonal.index, y=result.seasonal, mode="lines"),
+            row=3,
+            col=1,
+        )
+        .add_trace(
+            go.Scatter(x=result.resid.index, y=result.resid, mode="lines"),
+            row=4,
+            col=1,
+        )
+        .update_layout(
+            height=900, title=title, margin=dict(t=100), title_x=0.5, showlegend=False
+        ,template='ggplot2')
+    )
 
 class WindowedTestTimeSeriesSplit(TimeSeriesSplit):
     """
