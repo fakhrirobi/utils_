@@ -3,7 +3,7 @@ from sklearn.utils.validation import _deprecate_positional_args
 from sklearn.utils import indexable
 from sklearn.utils.validation import _num_samples
 import pandas as pd 
-
+import numpy as np 
 
 def get_metrics(ytrue,yhat) : 
     from sklearn.metrics import (mean_absolute_error,
