@@ -7,6 +7,7 @@ import numpy as np
 
 def create_corr_plot(series, plot_pacf=False):
     import plotly.graph_objects as go 
+    from statsmodels.tsa.stattools import pacf,acf
     corr_array = pacf(series.dropna(), alpha=0.05) if plot_pacf else acf(series.dropna(), alpha=0.05)
     lower_y = corr_array[1][:,0] - corr_array[0]
     upper_y = corr_array[1][:,1] - corr_array[0]
